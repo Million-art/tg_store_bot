@@ -45,8 +45,8 @@ async def start(message):
     welcome_message = (  
         f"Hello {user_first_name} {user_last_name}! 👋\n\n"
         f"Welcome to Hulu Delivery.\n\n"
-        f"Here you can earn coins!\n\n"
-        f"Invite friends to earn more coins together, and level up faster! 🧨\n"
+        f"Here you can earn points!\n\n"
+        f"Invite friends to earn more points, and level up faster! 🧨\n"
     )
 
     try:
