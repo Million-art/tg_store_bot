@@ -29,7 +29,7 @@ bucket = storage.bucket()
 
 def generate_start_keyboard():
     keyboard = InlineKeyboardMarkup()
-    keyboard.add(InlineKeyboardButton("Open Web App", web_app=WebAppInfo(url="https://mrb-crypto.vercel.app")))
+    keyboard.add(InlineKeyboardButton("Order Now", web_app=WebAppInfo(url="https://tg-store.vercel.app/")))
     return keyboard
 
 
@@ -44,7 +44,7 @@ async def start(message):
     text = message.text.split()
     welcome_message = (  
         f"Hello {user_first_name} {user_last_name}! 👋\n\n"
-        f"Welcome to Mr. John.\n\n"
+        f"Welcome to Hulu Delivery.\n\n"
         f"Here you can earn coins!\n\n"
         f"Invite friends to earn more coins together, and level up faster! 🧨\n"
     )
@@ -69,8 +69,7 @@ async def start(message):
                     'claimedTime': None,
                     'claimedDay': 0
                 },
-                'WalletAddress': None,
-                 
+                  
             }
 
             if len(text) > 1 and text[1].startswith('ref_'):   
