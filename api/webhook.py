@@ -45,8 +45,8 @@ async def start(message):
     welcome_message = (  
         f"Hello {user_first_name} {user_last_name}! 👋\n\n"
         f"Welcome to Hulu Delivery.\n\n"
-        f"Here you can earn points!\n\n"
-        f"Invite friends to earn more points, and level up faster! 🧨\n"
+        f"collect points and order Products!\n\n"
+        f"Invite friends to earn more points! 🧨\n"
     )
 
     try:
@@ -64,6 +64,7 @@ async def start(message):
                 'username': user_username,
                 'languageCode': user_language_code,
                 'isPremium': is_premium,
+                'phone':None,
                 'balance': 0,
                 'daily': {
                     'claimedTime': None,
@@ -114,12 +115,53 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  
         post_data = self.rfile.read(content_length)
-        update_dict = json.loads(post_data.decode('utf-8'))
-
-        asyncio.run(self.process_update(update_dict))
+        request_path = self.path  # Get the request path
+        
+        if request_path == "/api/create-order":
+            self.create_order(post_data)
+        else:
+            update_dict = json.loads(post_data.decode('utf-8'))
+            asyncio.run(self.process_update(update_dict))
 
         self.send_response(200)
         self.end_headers()
+
+    def create_order(self, post_data):
+        try:
+            order_data = json.loads(post_data.decode('utf-8'))
+
+            # Extract order details
+            user_id = order_data.get("userId")
+            items = order_data.get("items", [])
+            total_price = order_data.get("totalPrice")
+            payment_method = order_data.get("paymentMethod")
+
+            if not user_id or not items or not total_price:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": "Missing required fields"}).encode("utf-8"))
+                return
+
+            # Create an order document in Firestore
+            order_ref = db.collection("orders").document()
+            order_ref.set({
+                "userId": user_id,
+                "items": items,
+                "totalPrice": total_price,
+                "paymentMethod": payment_method,
+                "status": "pending",
+                "createdAt": datetime.datetime.utcnow().isoformat(),
+            })
+
+            # Send a response back
+            self.send_response(201)
+            self.end_headers()
+            self.wfile.write(json.dumps({"message": "Order created successfully"}).encode("utf-8"))
+        
+        except Exception as e:
+            self.send_response(500)
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
     async def process_update(self, update_dict):
         update = types.Update.de_json(update_dict)
@@ -129,6 +171,3 @@ class handler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write('Hello, BOT is running!'.encode('utf-8'))
-
-
- 
