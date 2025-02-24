@@ -112,6 +112,14 @@ async def start(message):
         print(f"Error occurred: {str(e)}")  
 
 class handler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        # Handle CORS preflight request
+        self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  
         post_data = self.rfile.read(content_length)
@@ -124,6 +132,7 @@ class handler(BaseHTTPRequestHandler):
             asyncio.run(self.process_update(update_dict))
 
         self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")  # Allow requests from any origin
         self.end_headers()
 
     def create_order(self, post_data):
@@ -138,6 +147,7 @@ class handler(BaseHTTPRequestHandler):
 
             if not user_id or not items or not total_price:
                 self.send_response(400)
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Missing required fields"}).encode("utf-8"))
                 return
@@ -155,11 +165,13 @@ class handler(BaseHTTPRequestHandler):
 
             # Send a response back
             self.send_response(201)
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"message": "Order created successfully"}).encode("utf-8"))
         
         except Exception as e:
             self.send_response(500)
+            self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
@@ -169,5 +181,6 @@ class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.send_response(200)
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write('Hello, BOT is running!'.encode('utf-8'))
