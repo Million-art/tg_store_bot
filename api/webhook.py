@@ -115,7 +115,7 @@ class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         # Handle CORS preflight request
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", "https://d2bf-185-183-33-220.ngrok-free.app")
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
@@ -123,7 +123,7 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])  
         post_data = self.rfile.read(content_length)
-        request_path = self.path  # Get the request path
+        request_path = self.path  
         
         if request_path == "/api/create-order":
             self.create_order(post_data)
@@ -132,19 +132,19 @@ class handler(BaseHTTPRequestHandler):
             asyncio.run(self.process_update(update_dict))
 
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "*")  # Allow requests from any origin
+        self.send_header("Access-Control-Allow-Origin", "*")  
         self.end_headers()
 
 def create_order(self, post_data):
     try:
         order_data = json.loads(post_data.decode('utf-8'))
-        print("Received order data:", order_data)  # Debugging log
+        print("Received order data:", order_data)  
 
         # Extract order details
         user_id = order_data.get("userId")
         items = order_data.get("items", [])
         total_price = order_data.get("totalPrice")
-        payment_method = order_data.get("paymentMethod", "Not specified")  # Default to "Not specified"
+        payment_method = order_data.get("paymentMethod", "Not specified")  
 
         # Validate required fields
         if not user_id or not isinstance(items, list) or len(items) == 0 or total_price is None:
