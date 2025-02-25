@@ -135,60 +135,72 @@ class handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", "*")  # Allow requests from any origin
         self.end_headers()
 
-    def create_order(self, post_data):
-        try:
-            order_data = json.loads(post_data.decode('utf-8'))
+def create_order(self, post_data):
+    try:
+        order_data = json.loads(post_data.decode('utf-8'))
+        print("Received order data:", order_data)  # Debugging log
 
-            # Extract order details
-            user_id = order_data.get("userId")
-            items = order_data.get("items", [])
-            
-            total_price = order_data.get("totalPrice")
-            payment_method = order_data.get("paymentMethod")
+        # Extract order details
+        user_id = order_data.get("userId")
+        items = order_data.get("items", [])
+        total_price = order_data.get("totalPrice")
+        payment_method = order_data.get("paymentMethod", "Not specified")  # Default to "Not specified"
 
-            if not user_id or not items or not total_price:
-                self.send_response(400)
-                self.send_header("Access-Control-Allow-Origin", "*")
-                self.end_headers()
-                self.wfile.write(json.dumps({"error": "Missing required fields"}).encode("utf-8"))
-                return
-
-            # Create an order document in Firestore
-            order_ref = db.collection("orders").document()
-            order_ref.set({
-                "userId": user_id,
-                "items": items,
-                "totalPrice": total_price,
-                "paymentMethod": payment_method,
-                "status": "pending",
-                "createdAt": datetime.datetime.utcnow().isoformat(),
-            })
-
-            # Notify the admin
-            admin_id = 386095768
-            item_list = "\n".join([f"- {item['name']} (x{item['quantity']})" for item in items])
-            order_message = (
-                f"📦 *New Order Received!*\n\n"
-                f"👤 *User ID:* `{user_id}`\n"
-                f"🛒 *Items:*\n{item_list}\n"
-                f"💰 *Total Price:* {total_price}\n"
-                f"💳 *Payment Method:* {payment_method}\n\n"
-                f"✅ Please review and accept the order."
-            )
-
-            asyncio.run(bot.send_message(admin_id, order_message, parse_mode="Markdown"))
-
-            # Send a response back
-            self.send_response(201)
+        # Validate required fields
+        if not user_id or not isinstance(items, list) or len(items) == 0 or total_price is None:
+            self.send_response(400)
+            self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps({"message": "Order created successfully"}).encode("utf-8"))
+            self.wfile.write(json.dumps({"error": "Missing required fields (userId, items, or totalPrice)"}).encode("utf-8"))
+            return
 
-        except Exception as e:
-            self.send_response(500)
-            self.send_header("Access-Control-Allow-Origin", "*")
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
+        # Create an order document in Firestore
+        order_ref = db.collection("orders").document()
+        order_ref.set({
+            "userId": user_id,
+            "items": items,
+            "totalPrice": total_price,
+            "paymentMethod": payment_method,
+            "status": "pending",
+            "createdAt": datetime.datetime.utcnow().isoformat(),
+        })
+
+        # Notify the admin
+        admin_id = 386095768
+        item_list = "\n".join([f"- {item.get('name', 'Unknown Item')} (x{item.get('quantity', 1)})" for item in items])
+        order_message = (
+            f"📦 *New Order Received!*\n\n"
+            f"👤 *User ID:* `{user_id}`\n"
+            f"🛒 *Items:*\n{item_list}\n"
+            f"💰 *Total Price:* {total_price}\n"
+            f"💳 *Payment Method:* {payment_method}\n\n"
+            f"✅ Please review and accept the order."
+        )
+
+        asyncio.run(bot.send_message(admin_id, order_message, parse_mode="Markdown"))
+
+        # Send success response
+        self.send_response(201)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps({"message": "Order created successfully"}).encode("utf-8"))
+
+    except json.JSONDecodeError:
+        self.send_response(400)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": "Invalid JSON format"}).encode("utf-8"))
+
+    except Exception as e:
+        print(f"Error occurred: {str(e)}")  # Log error
+        self.send_response(500)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps({"error": str(e)}).encode("utf-8"))
 
     async def process_update(self, update_dict):
         update = types.Update.de_json(update_dict)
