@@ -115,7 +115,7 @@ class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         # Handle CORS preflight request
         self.send_response(200)
-        self.send_header("Access-Control-Allow-Origin", "https://d2bf-185-183-33-220.ngrok-free.app")
+        self.send_header("Access-Control-Allow-Origin", "https://tg-store.vercel.app")
         self.send_header("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
