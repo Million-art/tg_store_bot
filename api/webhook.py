@@ -142,6 +142,7 @@ class handler(BaseHTTPRequestHandler):
             # Extract order details
             user_id = order_data.get("userId")
             items = order_data.get("items", [])
+            
             total_price = order_data.get("totalPrice")
             payment_method = order_data.get("paymentMethod")
 
@@ -163,12 +164,26 @@ class handler(BaseHTTPRequestHandler):
                 "createdAt": datetime.datetime.utcnow().isoformat(),
             })
 
+            # Notify the admin
+            admin_id = 386095768
+            item_list = "\n".join([f"- {item['name']} (x{item['quantity']})" for item in items])
+            order_message = (
+                f"📦 *New Order Received!*\n\n"
+                f"👤 *User ID:* `{user_id}`\n"
+                f"🛒 *Items:*\n{item_list}\n"
+                f"💰 *Total Price:* {total_price}\n"
+                f"💳 *Payment Method:* {payment_method}\n\n"
+                f"✅ Please review and accept the order."
+            )
+
+            asyncio.run(bot.send_message(admin_id, order_message, parse_mode="Markdown"))
+
             # Send a response back
             self.send_response(201)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"message": "Order created successfully"}).encode("utf-8"))
-        
+
         except Exception as e:
             self.send_response(500)
             self.send_header("Access-Control-Allow-Origin", "*")
